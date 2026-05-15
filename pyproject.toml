@@ -1,0 +1,19 @@
+[project]
+name = "vision-proc-networks"
+version = "0.1.0"
+description = "dissertation project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "torch",
+    "torchvision",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "Pillow",
+    "jupyter",
+    "ipykernel",
+    "seaborn",
+    "rsatoolbox"
+]
