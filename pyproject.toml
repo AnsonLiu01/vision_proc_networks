@@ -21,4 +21,7 @@ dependencies = [
     "opencv-python>=4.13.0.92",
     "loguru>=0.7.3",
     "xgboost>=3.2.0",
+    "ultralytics>=8.4.69",
+    "imageio-ffmpeg>=0.6.0",
+    "lap>=0.5.13",
 ]
