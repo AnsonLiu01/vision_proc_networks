@@ -221,3 +221,6 @@ runs/
 *_clip*.mp4
 **/runs/
 *.mp4
+
+# PARTICIPANT DATA
+SUBJECT eeg data/
