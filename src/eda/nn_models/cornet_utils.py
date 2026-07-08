@@ -176,29 +176,45 @@ def _face_cascade():
         cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
 
-def detect_face_bbox(rgb, scale_factor: float = 1.1, min_neighbors: int = 5,
-                     min_size: int = 50):
+def detect_face_bbox(rgb, scale_factor: float = 1.05, min_neighbors: int = 5,
+                     min_size: int = 50, min_confidence: float | None = None,
+                     return_confidence: bool = True):
     """Largest face box (x, y, w, h) in ORIGINAL-frame coords, or None.
 
     Runs the detector on the frame AND its 180-rotated copy so inverted faces are
     found as reliably as upright ones; the rotation only LOCATES the face — the
     crop keeps the original orientation.
+
+    Confidence: uses OpenCV's ``detectMultiScale3`` so each candidate box carries
+    a ``levelWeight`` — an UNCALIBRATED cascade score (higher = the box survived
+    deeper into the cascade; it is NOT a 0-1 probability, and its scale drifts
+    with ``min_neighbors``). If ``min_confidence`` is given, boxes scoring below
+    it are discarded, so a weak/spurious detection becomes a "no face" and
+    ``crop_to_face`` falls back to the central square. With
+    ``return_confidence=True`` returns ``(bbox, confidence)``; confidence is the
+    kept box's score, or ``None`` when no box survived.
     """
     import cv2
 
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     H, W = gray.shape
-    best, best_area = None, 0
+    best, best_area, best_conf = None, 0, None
     for rot in (0, 180):
         g = gray if rot == 0 else cv2.rotate(gray, cv2.ROTATE_180)
-        faces = _face_cascade().detectMultiScale(
+        objs, _reject, weights = _face_cascade().detectMultiScale3(
             g, scaleFactor=scale_factor, minNeighbors=min_neighbors,
-            minSize=(min_size, min_size))
-        for (x, y, w, h) in faces:
+            minSize=(min_size, min_size), outputRejectLevels=True)
+        weights = np.ravel(weights)
+        for i, (x, y, w, h) in enumerate(objs):
+            conf = float(weights[i]) if i < weights.size else 0.0
+            if min_confidence is not None and conf < min_confidence:
+                continue
             if rot == 180:
                 x, y = W - x - w, H - y - h
             if w * h > best_area:
-                best_area, best = w * h, (int(x), int(y), int(w), int(h))
+                best_area, best, best_conf = w * h, (int(x), int(y), int(w), int(h)), conf
+    if return_confidence:
+        return best, best_conf
     return best
 
 
